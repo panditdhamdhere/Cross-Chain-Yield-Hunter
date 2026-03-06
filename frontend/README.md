@@ -35,4 +35,4 @@ npm start
 
 ## AI Chat
 
-For the "Ask AI" chat, add `OPENAI_API_KEY` to `.env.local` in the frontend directory. The chat uses current yield data to answer questions.
+For the "Ask AI" chat, add **`GROQ_API_KEY`** (free at [console.groq.com](https://console.groq.com)) or `OPENAI_API_KEY` to `.env.local`. The chat uses current yield data to answer questions.

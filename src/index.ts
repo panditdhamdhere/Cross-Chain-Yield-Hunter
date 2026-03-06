@@ -36,7 +36,7 @@ async function main() {
   if (cmd !== 'scan') {
     initLifi(config.privateKey, config.lifiApiKey);
   }
-  initAi(config.openaiApiKey);
+  initAi(config.openaiApiKey, config.groqApiKey);
 
   const fromAddress = config.privateKey
     ? privateKeyToAccount(config.privateKey as `0x${string}`).address

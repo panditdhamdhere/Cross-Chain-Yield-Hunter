@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: "icons.llama.fi",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "li.fi",
+        pathname: "/assets/branding/**",
+      },
     ],
   },
 };

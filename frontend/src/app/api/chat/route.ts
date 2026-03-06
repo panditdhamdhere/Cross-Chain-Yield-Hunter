@@ -6,12 +6,24 @@ import type { YieldOpportunity } from '@/lib/yield-scanner';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
+function getAiClient(): { client: OpenAI; model: string } | null {
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+  if (groqKey) {
+    return { client: new OpenAI({ apiKey: groqKey, baseURL: 'https://api.groq.com/openai/v1' }), model: 'llama-3.1-8b-instant' };
+  }
+  if (openaiKey) {
+    return { client: new OpenAI({ apiKey: openaiKey }), model: 'gpt-4o-mini' };
+  }
+  return null;
+}
+
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-    if (!apiKey) {
+    const ai = getAiClient();
+    if (!ai) {
       return NextResponse.json(
-        { success: false, error: 'OPENAI_API_KEY not configured. Add it to your .env.local for AI chat.' },
+        { success: false, error: 'Add GROQ_API_KEY (free) or OPENAI_API_KEY to .env.local for AI chat. Get Groq key at console.groq.com' },
         { status: 503 }
       );
     }
@@ -44,9 +56,8 @@ User question: ${question}
 
 Respond in 2-4 sentences. Be concise and helpful. Focus on chains, protocols, APYs, and TVL when relevant.`;
 
-    const openai = new OpenAI({ apiKey });
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await ai.client.chat.completions.create({
+      model: ai.model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
       max_tokens: 300,

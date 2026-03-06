@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Loader2, RefreshCw, TrendingUp, ExternalLink, Sun, Moon, MessageCircle, Send, X } from "lucide-react";
+import { Search, Loader2, RefreshCw, ExternalLink, Sun, Moon, MessageCircle, Send, X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 const CHAIN_LOGOS: Record<string, string> = {
@@ -196,7 +196,7 @@ export default function Home() {
     } catch (e) {
       setChatMessages((m) => [
         ...m,
-        { role: "assistant", content: e instanceof Error ? e.message : "Something went wrong. Make sure OPENAI_API_KEY is set in .env.local" },
+        { role: "assistant", content: e instanceof Error ? e.message : "Something went wrong. Add GROQ_API_KEY or OPENAI_API_KEY to .env.local" },
       ]);
     } finally {
       setChatLoading(false);
@@ -227,24 +227,32 @@ export default function Home() {
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-[var(--accent)]/[0.04] blur-3xl" />
       </div>
 
-      <header className="relative shrink-0 border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-sm px-6 py-4">
-        <div className="flex w-full items-center justify-between gap-4 max-w-[1600px] mx-auto">
+      <header className="relative shrink-0 border-b border-[var(--border)] bg-[var(--bg)]/98 backdrop-blur-md px-6 py-3">
+        <div className="flex w-full items-center justify-between gap-6 max-w-[1600px] mx-auto">
           <motion.div
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-4"
+            className="flex items-center gap-5"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--surface)] border border-[var(--border)]">
-              <TrendingUp className="h-6 w-6 text-[var(--accent)]" strokeWidth={2} />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight text-[var(--fg)]">Cross-Chain Yield Hunter</h1>
-              <p className="text-sm text-[var(--fg-muted)] mt-0.5">Powered by LI.FI · DefiLlama</p>
+            <a
+              href="https://li.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex shrink-0 items-center gap-3 group"
+            >
+              <span className="flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
+                <span className="font-bold text-[var(--fg)] tracking-tight">LI.FI</span>
+              </span>
+              <span className="hidden sm:inline h-5 w-px bg-[var(--border)]" aria-hidden />
+            </a>
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-lg font-semibold tracking-tight text-[var(--fg)]">Cross-Chain Yield Hunter</h1>
+              <span className="text-xs text-[var(--fg-dim)] font-medium">by LI.FI · DefiLlama</span>
             </div>
           </motion.div>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--surface)]/80 border border-[var(--border)]" title="Supported chains">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)]" title="Supported chains">
               {(["Ethereum", "Polygon", "Arbitrum", "Base", "Optimism"] as const).map((chain) => (
                 <div
                   key={chain}
@@ -288,15 +296,15 @@ export default function Home() {
               {chatOpen ? "Close chat" : "Ask AI"}
             </motion.button>
             <motion.a
-              href="https://li.fi"
+              href="https://docs.li.fi"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-[var(--lifi-blue)]/30 bg-[var(--lifi-blue)]/10 px-3.5 py-2 text-sm font-medium text-[var(--lifi-blue)] hover:bg-[var(--lifi-blue)]/20 transition-colors"
             >
-              <ExternalLink className="h-4 w-4" />
-              Docs
+              <ExternalLink className="h-3.5 w-3.5" />
+              LI.FI Docs
             </motion.a>
           </div>
         </div>
@@ -487,7 +495,7 @@ export default function Home() {
                   </p>
                 )}
                 {chatMessages.map((msg, i) => {
-                  const isConfigError = msg.role === "assistant" && msg.content.toLowerCase().includes("openai_api_key");
+                  const isConfigError = msg.role === "assistant" && (msg.content.toLowerCase().includes("api_key") || msg.content.toLowerCase().includes(".env"));
                   return (
                     <div
                       key={i}

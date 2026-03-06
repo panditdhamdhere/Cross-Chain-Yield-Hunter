@@ -13,6 +13,8 @@
   --surface-hover: rgba(255, 255, 255, 0.08);
   --accent: #f59e0b;
   --accent-hover: #fbbf24;
+  --lifi-blue: #5C67FF;
+  --lifi-pink: #F7C2FF;
 }
 
 [data-theme="light"] {
@@ -27,6 +29,8 @@
   --surface-hover: rgba(0, 0, 0, 0.04);
   --accent: #d97706;
   --accent-hover: #b45309;
+  --lifi-blue: #4f5ae8;
+  --lifi-pink: #e8a8f0;
 }
 
 @theme inline {

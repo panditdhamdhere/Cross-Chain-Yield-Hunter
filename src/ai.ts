@@ -1,29 +1,40 @@
 /**
  * AI service for Cross-Chain Yield Hunter
- * Uses OpenAI for decision augmentation and natural language Q&A
- * Gracefully falls back when OPENAI_API_KEY is not set
+ * Supports Groq (free) and OpenAI for decision augmentation and natural language Q&A
+ * Prefers GROQ_API_KEY when set; falls back to OPENAI_API_KEY
  */
 
 import OpenAI from 'openai';
 import { logger } from './logger.js';
 import type { YieldOpportunity, QuoteEstimate } from './types.js';
 
-let openai: OpenAI | null = null;
+let client: OpenAI | null = null;
+let provider: 'groq' | 'openai' = 'openai';
 
-export function initAi(apiKey?: string): boolean {
-  const key = apiKey ?? process.env.OPENAI_API_KEY?.trim();
-  if (!key) {
-    logger.info('OPENAI_API_KEY not set — AI features disabled, using rule-based logic');
-    return false;
+export function initAi(openaiKey?: string, groqKey?: string): boolean {
+  const groq = groqKey ?? process.env.GROQ_API_KEY?.trim();
+  const openai = openaiKey ?? process.env.OPENAI_API_KEY?.trim();
+  if (groq) {
+    client = new OpenAI({ apiKey: groq, baseURL: 'https://api.groq.com/openai/v1' });
+    provider = 'groq';
+    logger.info('AI service initialized (Groq, free tier)');
+    return true;
   }
-  openai = new OpenAI({ apiKey: key });
-  logger.info('AI service initialized (OpenAI)');
-  return true;
+  if (openai) {
+    client = new OpenAI({ apiKey: openai });
+    provider = 'openai';
+    logger.info('AI service initialized (OpenAI)');
+    return true;
+  }
+  logger.info('GROQ_API_KEY and OPENAI_API_KEY not set — AI features disabled, using rule-based logic');
+  return false;
 }
 
 export function isAiEnabled(): boolean {
-  return openai !== null;
+  return client !== null;
 }
+
+const CHAT_MODEL = { groq: 'llama-3.1-8b-instant', openai: 'gpt-4o-mini' } as const;
 
 /**
  * Get AI recommendation for rebalance decision
@@ -39,7 +50,7 @@ export async function getRebalanceRecommendation(params: {
   quoteEstimate?: QuoteEstimate | null;
   minApyDifferential: number;
 }): Promise<{ action: 'rebalance' | 'hold'; reasoning: string } | null> {
-  if (!openai) return null;
+  if (!client) return null;
 
   const {
     opportunities,
@@ -74,8 +85,8 @@ Respond with JSON only, no markdown:
 {"action": "rebalance" or "hold", "reasoning": "Brief explanation (1-2 sentences)"}`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await client.chat.completions.create({
+      model: CHAT_MODEL[provider],
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 200,
@@ -104,7 +115,7 @@ export async function answerYieldQuestion(
   question: string,
   opportunities: YieldOpportunity[]
 ): Promise<string | null> {
-  if (!openai) return null;
+  if (!client) return null;
 
   const oppsSummary = opportunities.slice(0, 15).map((o) => ({
     chain: o.chain,
@@ -124,8 +135,8 @@ User question: ${question}
 Respond in 2-4 sentences. Be concise and helpful. Focus on chains, protocols, APYs, and TVL when relevant.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await client.chat.completions.create({
+      model: CHAT_MODEL[provider],
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
       max_tokens: 300,

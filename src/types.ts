@@ -43,6 +43,7 @@ export interface AgentConfig {
   privateKey: string;
   lifiApiKey?: string;
   openaiApiKey?: string;
+  groqApiKey?: string;
   minApyDifferential: number;
   minPositionUsd: number;
   maxPositionUsd: number;

@@ -28,6 +28,7 @@ export function loadConfig(requirePrivateKey = true): AgentConfig {
     privateKey: requirePrivateKey ? requireEnv('PRIVATE_KEY', 'run') : (process.env.PRIVATE_KEY?.trim() ?? ''),
     lifiApiKey: process.env.LIFI_API_KEY?.trim() || undefined,
     openaiApiKey: process.env.OPENAI_API_KEY?.trim() || undefined,
+    groqApiKey: process.env.GROQ_API_KEY?.trim() || undefined,
     minApyDifferential: parseNumber(
       optionalEnv('MIN_APY_DIFFERENTIAL', '1.5'),
       1.5
