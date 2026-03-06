@@ -1,0 +1,35 @@
+# Cross-Chain Yield Hunter Agent - Render Background Worker
+# Deploys the CLI agent to run 24/7: scan → decide → execute
+
+services:
+  - type: worker
+    name: yield-hunter-agent
+    runtime: node
+    region: oregon
+    plan: starter
+
+    # Root dir must be repo root (not src/) - dist/ is created here
+    rootDir: .
+
+    # Ensure devDeps (TypeScript) are installed for build
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: node dist/index.js
+
+    # Env vars - set these in Render Dashboard (sync: false = prompt for value)
+    envVars:
+      - key: PRIVATE_KEY
+        sync: false
+      - key: LIFI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DRY_RUN
+        value: "true"
+      - key: MIN_APY_DIFFERENTIAL
+        value: "1.5"
+      - key: MIN_POSITION_USD
+        value: "1000"
+      - key: MAX_POSITION_USD
+        value: "10000"
+      - key: SCAN_INTERVAL_MINUTES
+        value: "30"
