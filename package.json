@@ -1,0 +1,43 @@
+{
+  "name": "cross-chain-yield-hunter",
+  "version": "1.0.0",
+  "description": "Autonomous AI agent that hunts and rebalances into the best yields across chains using LI.FI",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "agent": "tsx src/index.ts run",
+    "agent:dry": "tsx src/index.ts run --dry-run",
+    "scan": "tsx src/index.ts scan",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "lifi",
+    "defi",
+    "yield",
+    "agent",
+    "cross-chain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@lifi/sdk": "^3.6.0",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.4.5",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.6"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

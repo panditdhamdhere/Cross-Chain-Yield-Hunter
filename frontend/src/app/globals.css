@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root,
+[data-theme="dark"] {
+  --bg: #0a0b0e;
+  --fg: #f1f5f9;
+  --fg-primary: #ffffff;
+  --fg-muted: #94a3b8;
+  --fg-dim: #64748b;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.03);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+}
+
+[data-theme="light"] {
+  --bg: #fafbfc;
+  --fg: #0f172a;
+  --fg-primary: #000000;
+  --fg-muted: #475569;
+  --fg-dim: #94a3b8;
+  --border: rgba(0, 0, 0, 0.06);
+  --border-subtle: rgba(0, 0, 0, 0.03);
+  --surface: rgba(0, 0, 0, 0.02);
+  --surface-hover: rgba(0, 0, 0, 0.04);
+  --accent: #d97706;
+  --accent-hover: #b45309;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
