@@ -275,13 +275,17 @@ export default function Home() {
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </motion.button>
             <motion.button
-              onClick={() => setChatOpen(true)}
+              onClick={() => setChatOpen((o) => !o)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] transition-colors"
+              className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                chatOpen
+                  ? "border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)]"
+                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]"
+              }`}
             >
               <MessageCircle className="h-4 w-4" />
-              Ask AI
+              {chatOpen ? "Close chat" : "Ask AI"}
             </motion.button>
             <motion.a
               href="https://li.fi"
@@ -298,7 +302,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-6 py-6 max-w-[1600px] w-full mx-auto">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <main className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-6 py-6 transition-all duration-300 ${chatOpen ? "" : "max-w-[1600px] mx-auto w-full"}`}>
         <div className="flex w-full flex-1 flex-col gap-4 overflow-hidden">
           <motion.section
             initial={{ opacity: 0, y: 4 }}
@@ -455,68 +460,53 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Floating chat button */}
-      {!chatOpen && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-black shadow-lg hover:bg-[var(--accent-hover)] transition-colors z-40"
-          aria-label="Open AI chat"
-        >
-          <MessageCircle className="h-6 w-6" strokeWidth={2} />
-        </motion.button>
-      )}
-
-      {/* Chat panel */}
+      {/* Chat sidebar - no overlay, dashboard shifts left */}
       <AnimatePresence>
         {chatOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6"
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 400, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="flex shrink-0 flex-col border-l border-[var(--border)] bg-[var(--bg)] overflow-hidden"
           >
-            <div className="absolute inset-0 bg-black/40" onClick={() => setChatOpen(false)} />
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative flex h-[420px] w-full max-w-md flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl"
-            >
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                <span className="font-semibold text-[var(--fg)]">Ask about yields</span>
-                <button
-                  onClick={() => setChatOpen(false)}
-                  className="rounded-lg p-1.5 text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]"
-                  aria-label="Close chat"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+              <span className="font-semibold text-[var(--fg)]">Ask about yields</span>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="rounded-lg p-1.5 text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]"
+                aria-label="Close chat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
                 {chatMessages.length === 0 && (
                   <p className="text-sm text-[var(--fg-dim)]">
                     Ask anything about current yield opportunities. e.g. &quot;What&apos;s the best yield for $5k on Arbitrum?&quot;
                   </p>
                 )}
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
+                {chatMessages.map((msg, i) => {
+                  const isConfigError = msg.role === "assistant" && msg.content.toLowerCase().includes("openai_api_key");
+                  return (
                     <div
-                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                        msg.role === "user"
-                          ? "bg-[var(--accent)] text-black"
-                          : "bg-[var(--surface-hover)] text-[var(--fg)]"
-                      }`}
+                      key={i}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {msg.content}
+                      <div
+                        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                          isConfigError
+                            ? "border border-amber-500/30 bg-amber-500/10 text-[var(--fg-muted)]"
+                            : msg.role === "user"
+                              ? "bg-[var(--accent)] text-black"
+                              : "bg-[var(--surface-hover)] text-[var(--fg)]"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {chatLoading && (
                   <div className="flex justify-start">
                     <div className="rounded-lg bg-[var(--surface-hover)] px-3 py-2">
@@ -524,31 +514,31 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-              </div>
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleChatSend(); }}
-                className="flex gap-2 border-t border-[var(--border)] p-3"
+            </div>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleChatSend(); }}
+              className="flex shrink-0 gap-2 border-t border-[var(--border)] bg-[var(--surface)] p-3"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about yields..."
+                className="flex-1 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+                disabled={chatLoading}
+              />
+              <button
+                type="submit"
+                disabled={chatLoading || !chatInput.trim()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--accent-hover)]"
               >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about yields..."
-                  className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
-                  disabled={chatLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={chatLoading || !chatInput.trim()}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--accent-hover)]"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </motion.aside>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
