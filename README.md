@@ -46,6 +46,7 @@ Then open http://localhost:3000 to view yield opportunities and run scans from t
 |-----|---------|-------------|
 | `PRIVATE_KEY` | — | **Required for run.** Wallet private key for signing |
 | `LIFI_API_KEY` | — | Optional. Higher rate limits at [li.fi](https://li.fi) |
+| `OPENAI_API_KEY` | — | Optional. Enables AI-powered decision logic. Without it, agent uses rule-based logic only |
 | `MIN_APY_DIFFERENTIAL` | 1.5 | Min APY gain (%) to trigger rebalance |
 | `MIN_POSITION_USD` | 1000 | Min position size (USD). Some DEXs require >$10k |
 | `MAX_POSITION_USD` | 10000 | Max position per rebalance |
@@ -55,7 +56,7 @@ Then open http://localhost:3000 to view yield opportunities and run scans from t
 ## How It Works
 
 1. **Scan**: Fetches yield data from DefiLlama for LI.FI Composer-supported protocols
-2. **Decide**: Compares APYs, gets LI.FI quote for bridge cost, computes net APY gain
+2. **Decide**: Compares APYs, gets LI.FI quote for bridge cost, computes net APY gain. With `OPENAI_API_KEY`, an LLM augments the decision—it can approve rebalance or advise hold with reasoning
 3. **Execute**: Uses LI.FI SDK to execute cross-chain vault deposit (bridge + deposit in one tx)
 4. **Monitor**: Polls status until complete, then sleeps until next scan
 

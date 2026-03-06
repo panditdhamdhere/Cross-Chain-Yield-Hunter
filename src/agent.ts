@@ -7,6 +7,7 @@ import { scanYields } from './yieldScanner.js';
 import { estimateRebalanceCost, executeVaultDeposit } from './lifiExecutor.js';
 import { getUsdcAddress } from './tokens.js';
 import { LIFI_TO_DEFILLAMA_CHAIN } from './chainMap.js';
+import { getRebalanceRecommendation } from './ai.js';
 import { logger } from './logger.js';
 import type { AgentConfig, AgentState, QuoteEstimate, RebalanceDecision, YieldOpportunity } from './types.js';
 
@@ -124,6 +125,47 @@ export class YieldHunterAgent {
       return {
         action: 'hold',
         reason: `Net APY after bridge cost (${netApyAfterFees.toFixed(2)}%) insufficient`,
+        fromOpportunity: currentPosition ? this.positionToOpportunity(currentPosition) : undefined,
+        toOpportunity: chosenOpportunity,
+        estimatedNetApyGain: netApyAfterFees - currentApy,
+        quoteEstimate,
+      };
+    }
+
+    // AI augmentation: get LLM recommendation when rule-based logic suggests rebalance
+    const currentPosForAi = currentPosition
+      ? {
+          chain: LIFI_TO_DEFILLAMA_CHAIN[currentPosition.chainId] ?? '',
+          protocol: currentPosition.protocol,
+          apy: currentPosition.apy,
+        }
+      : null;
+
+    const aiRec = await getRebalanceRecommendation({
+      opportunities,
+      currentPosition: currentPosForAi,
+      bestOpportunity: chosenOpportunity,
+      apyGain: chosenOpportunity.apy - currentApy,
+      netApyAfterFees,
+      quoteEstimate,
+      minApyDifferential: this.config.minApyDifferential,
+    });
+
+    if (aiRec) {
+      logger.info({ aiAction: aiRec.action, aiReasoning: aiRec.reasoning }, 'AI recommendation');
+      if (aiRec.action === 'hold') {
+        return {
+          action: 'hold',
+          reason: `AI advised hold: ${aiRec.reasoning}`,
+          fromOpportunity: currentPosition ? this.positionToOpportunity(currentPosition) : undefined,
+          toOpportunity: chosenOpportunity,
+          estimatedNetApyGain: netApyAfterFees - currentApy,
+          quoteEstimate,
+        };
+      }
+      return {
+        action: 'rebalance',
+        reason: `AI approved: ${aiRec.reasoning}`,
         fromOpportunity: currentPosition ? this.positionToOpportunity(currentPosition) : undefined,
         toOpportunity: chosenOpportunity,
         estimatedNetApyGain: netApyAfterFees - currentApy,
