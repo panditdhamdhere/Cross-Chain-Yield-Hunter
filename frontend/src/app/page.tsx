@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Loader2, RefreshCw, TrendingUp, ExternalLink, Sun, Moon } from "lucide-react";
+import { Search, Loader2, RefreshCw, TrendingUp, ExternalLink, Sun, Moon, MessageCircle, Send, X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 const CHAIN_LOGOS: Record<string, string> = {
@@ -162,12 +162,46 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const [opportunities, setOpportunities] = useState<YieldOpportunity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastScan, setLastScan] = useState<Date | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+
+  async function handleChatSend() {
+    const q = chatInput.trim();
+    if (!q || chatLoading) return;
+    setChatInput("");
+    setChatMessages((m) => [...m, { role: "user", content: q }]);
+    setChatLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q, opportunities }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? "Chat failed");
+      setChatMessages((m) => [...m, { role: "assistant", content: json.answer }]);
+    } catch (e) {
+      setChatMessages((m) => [
+        ...m,
+        { role: "assistant", content: e instanceof Error ? e.message : "Something went wrong. Make sure OPENAI_API_KEY is set in .env.local" },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   async function handleScan() {
     setLoading(true);
@@ -239,6 +273,15 @@ export default function Home() {
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </motion.button>
+            <motion.button
+              onClick={() => setChatOpen(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Ask AI
             </motion.button>
             <motion.a
               href="https://li.fi"
@@ -411,6 +454,101 @@ export default function Home() {
           </footer>
         </div>
       </main>
+
+      {/* Floating chat button */}
+      {!chatOpen && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-black shadow-lg hover:bg-[var(--accent-hover)] transition-colors z-40"
+          aria-label="Open AI chat"
+        >
+          <MessageCircle className="h-6 w-6" strokeWidth={2} />
+        </motion.button>
+      )}
+
+      {/* Chat panel */}
+      <AnimatePresence>
+        {chatOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6"
+          >
+            <div className="absolute inset-0 bg-black/40" onClick={() => setChatOpen(false)} />
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative flex h-[420px] w-full max-w-md flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl"
+            >
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+                <span className="font-semibold text-[var(--fg)]">Ask about yields</span>
+                <button
+                  onClick={() => setChatOpen(false)}
+                  className="rounded-lg p-1.5 text-[var(--fg-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]"
+                  aria-label="Close chat"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
+                {chatMessages.length === 0 && (
+                  <p className="text-sm text-[var(--fg-dim)]">
+                    Ask anything about current yield opportunities. e.g. &quot;What&apos;s the best yield for $5k on Arbitrum?&quot;
+                  </p>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                        msg.role === "user"
+                          ? "bg-[var(--accent)] text-black"
+                          : "bg-[var(--surface-hover)] text-[var(--fg)]"
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-lg bg-[var(--surface-hover)] px-3 py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-[var(--fg-dim)]" />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleChatSend(); }}
+                className="flex gap-2 border-t border-[var(--border)] p-3"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about yields..."
+                  className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+                  disabled={chatLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--accent-hover)]"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

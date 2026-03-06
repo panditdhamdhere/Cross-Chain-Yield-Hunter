@@ -38,7 +38,7 @@ npm run agent
 cd frontend && npm install && npm run dev
 ```
 
-Then open http://localhost:3000 to view yield opportunities and run scans from the UI.
+Then open http://localhost:3000 to view yield opportunities, run scans, and use the AI chat. Add `OPENAI_API_KEY` to `frontend/.env.local` for the chat.
 
 ## Configuration
 
