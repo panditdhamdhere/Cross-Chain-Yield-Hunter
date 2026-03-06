@@ -6,6 +6,7 @@
 
 import { loadConfig } from './config.js';
 import { initLifi } from './lifiExecutor.js';
+import { initAi } from './ai.js';
 import { YieldHunterAgent } from './agent.js';
 import { logger } from './logger.js';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -35,6 +36,7 @@ async function main() {
   if (cmd !== 'scan') {
     initLifi(config.privateKey, config.lifiApiKey);
   }
+  initAi(config.openaiApiKey);
 
   const fromAddress = config.privateKey
     ? privateKeyToAccount(config.privateKey as `0x${string}`).address

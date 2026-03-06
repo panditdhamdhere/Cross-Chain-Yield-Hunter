@@ -42,6 +42,7 @@ export interface RebalanceDecision {
 export interface AgentConfig {
   privateKey: string;
   lifiApiKey?: string;
+  openaiApiKey?: string;
   minApyDifferential: number;
   minPositionUsd: number;
   maxPositionUsd: number;
