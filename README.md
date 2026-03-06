@@ -90,13 +90,17 @@ To run the agent 24/7 as a background worker:
 1. Push this repo to GitHub
 2. Go to [Render Dashboard](https://dashboard.render.com) → New → Blueprint
 3. Connect your repo — Render will detect `render.yaml` and create the worker
-4. **If you created the service manually:** Ensure **Root Directory** is blank (repo root). Wrong root (e.g. `src`) causes `MODULE_NOT_FOUND` for `dist/index.js`
+4. **If deploy fails with `Cannot find module 'dist/index.js'`** — Render ran only `npm install` and skipped the TypeScript build. In **Settings → Build & Deploy**, set **Build Command** to:
+   ```
+   npm install --include=dev && npm run build
+   ```
+   Ensure **Root Directory** is blank (repo root).
 5. Set environment variables in Render:
    - `PRIVATE_KEY` (required) — wallet private key for signing
    - `LIFI_API_KEY` (optional) — higher rate limits
    - `GROQ_API_KEY` or `OPENAI_API_KEY` (optional) — for AI decisions
    - `DRY_RUN` — set to `false` to execute real transactions
-5. Deploy
+6. Deploy
 
 The agent will run continuously: scan → decide → execute on the configured interval.
 
